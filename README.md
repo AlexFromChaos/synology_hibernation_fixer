@@ -13,7 +13,7 @@ The script integrates changes I've described [here](https://www.reddit.com/r/syn
 - applying in-memory patches for DSM binaries which prevent HDD hibernation to function normally when there is an NVMe activity (allows for eg. to setup noisy Docker containers on an NVMe partition and have working HDD hibernation)
 - automatic remounting of rootfs as `noatime` to avoid random wake ups
 - setting `noatime` for disk volumes
-- **persists between DSM upgrades**. No need to reapply the script after DSM updates (as long as Synology doesn't break something)
+- **persists after DSM upgrades**. No need to reapply the script after DSM updates (as long as Synology doesn't break something)
 
 The script should support all x86-based NAS models running DSM 7.
 
@@ -43,4 +43,8 @@ The script enumerates all synocrond tasks, prints their short descriptions and a
 
 You can simply delete the **HDD Hibernation Fixer task** task in DSM's **Task Scheduler**.
 
-or, run `sudo python3 hiber_fixer.py --uninstall`
+or, run
+
+```bash
+sudo python3 hiber_fixer.py --uninstall
+```
