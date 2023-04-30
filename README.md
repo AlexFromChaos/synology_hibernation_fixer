@@ -2,7 +2,7 @@
 
 This script allows to fix multiple issues which prevent Synology NAS to have working HDD hibernation.
 
-It is expecially useful if you setup Docker containers on an NVMe partition - by default Synology NASes have a flaw which prevents HDD disks to hibernate when there is an ongoing NVMe activity.
+It is especially useful if you setup Docker containers on an NVMe partition - by default Synology NASes have a flaw which prevents HDD disks to hibernate when there is an ongoing NVMe activity.
 
 The script integrates changes I've described [here](https://www.reddit.com/r/synology/comments/10cpbqd/making_disk_hibernation_work_on_synology_dsm_7/) and [here](https://www.reddit.com/r/synology/comments/129lzjg/fixing_hdd_hibernation_when_you_have_docker_on/)
 
@@ -26,6 +26,8 @@ Upon installation, the script creates a **Task Scheduler** task which is trigger
 As this kind of scheduled tasks is preserved by DSM during a DSM upgrade, this approach allows to safely persist between DSM updates. Internally DSM keeps these tasks inside a database which has other user-added tasks.
 
 When invoked, the task verifies synocrond tasks configuration, changes their settings if necessary (like after a DSM update), applies other fixes and then exits - nothing left executing in the background.
+
+The script logs its execution in the `/var/log/hibernation_fixer.log` file.
 
 ## Usage
 
