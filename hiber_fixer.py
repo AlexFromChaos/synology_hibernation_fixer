@@ -859,7 +859,7 @@ def apply_user_config_to_synocrond_config():
         except:
             pass
 
-        ret = subprocess.run(["systemctl", "reload", "synocrond"])
+        ret = subprocess.call(["systemctl", "reload", "synocrond"])
         if ret:
             err(f"reloading synocrond failed: {ret}")
             return False
