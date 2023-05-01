@@ -66,11 +66,15 @@ g_user_config = {
     "builtin-synodatacollect-udc": "delete",
     "builtin-synodatacollect-udc-disk": "delete",
     "builtin-synorenewdefaultcert-renew_default_certificate": "monthly",
+    "builtin-synorenewdefaultcert-default": "monthly",
     "builtin-synosharesnaptree_reconstruct-default": "weekly",
     "builtin-synosharing-default": "monthly",
     "builtin-synolegalnotifier-synolegalnotifier": "monthly",
+    "builtin-synolegalnotifier-default": "monthly",
     "builtin-syno_ew_weekly_check-extended_warranty_check": "monthly",
+    "builtin-syno_ew_weekly_check-default": "monthly",
     "builtin-syno_ntp_status_check-check_ntp_status": "monthly",
+    "builtin-syno_ntp_status_check-default": "monthly",
     "builtin-libsynostorage-syno_disk_db_update": "monthly",
     "builtin-libsynostorage-syno_btrfs_metadata_check": "monthly",
     "pkg-ReplicationService-synobtrfsreplicacore-clean": "monthly",
@@ -564,6 +568,10 @@ def remove_esynoscheduler_task(task_name):
 UDC_DESC = "user data collection related"
 SYNODBUD_DESC = "updates misc DBs: syno-abuser-blocklist, geoip-database, ca-certificates, securityscan-database"
 SYNO_DISK_HEALTH_RECORD_DESC = "parses /var/log/disk_overview.xml which has disk-related stats like remaining life, errors and other information"
+EW_WEEKLY_CHECK_DESC = "queries synology website for 'extended warranty' info, using device information, updates /var/cache/ew_info_cache.json"
+SYNOLEGALNOTIFIER_DESC = "'legal data downloader'. Downloads user agreements from Synology site, can notify user about them"
+NTP_STATUS_CHECK_DESC = "runs NTP time sync"
+RENEW_DEFAULT_CERTIFICATE_DESC = "processes cryptographic certificates - generates some, checks expiration, deletes, copies"
 
 known_task_descriptions = {
     "builtin-synodbud-synodbud": SYNODBUD_DESC,  # /usr/syno/etc/synocron.d/synodbud.conf
@@ -579,12 +587,16 @@ known_task_descriptions = {
     "builtin-synocrond_btrfs_free_space_analyze-default": "calculates BTRFS fragmentation level for disks and writes results to a per-volume file 'frag_analysis'",
     "builtin-synodatacollect-udc": UDC_DESC,
     "builtin-synodatacollect-udc-disk": UDC_DESC,
-    "builtin-synorenewdefaultcert-renew_default_certificate": "processes cryptographic certificates - generates some, checks expiration, deletes, copies",
+    "builtin-synorenewdefaultcert-renew_default_certificate": RENEW_DEFAULT_CERTIFICATE_DESC,
+    "builtin-synorenewdefaultcert-default": RENEW_DEFAULT_CERTIFICATE_DESC,
     "builtin-synosharesnaptree_reconstruct-default": "runs /usr/syno/sbin/synosharesnaptree -x <volume>, which reconstructs BTRFS snapshot tree",
     "builtin-synosharing-default": "does cleanup of SQLite DB tables (session/token/entry) in /usr/syno/etc/private/session/sharing/sharing.db",
-    "builtin-synolegalnotifier-synolegalnotifier": "'legal data downloader'. Downloads user agreements from Synology site, can notify user about them",
-    "builtin-syno_ew_weekly_check-extended_warranty_check": "queries synology website for 'extended warranty' info, using device information, updates /var/cache/ew_info_cache.json",
-    "builtin-syno_ntp_status_check-check_ntp_status": "runs NTP time sync",
+    "builtin-synolegalnotifier-synolegalnotifier": SYNOLEGALNOTIFIER_DESC,
+    "builtin-synolegalnotifier-default": SYNOLEGALNOTIFIER_DESC,
+    "builtin-syno_ew_weekly_check-extended_warranty_check": EW_WEEKLY_CHECK_DESC,
+    "builtin-syno_ew_weekly_check-default": EW_WEEKLY_CHECK_DESC,
+    "builtin-syno_ntp_status_check-check_ntp_status": NTP_STATUS_CHECK_DESC,
+    "builtin-syno_ntp_status_check-default": NTP_STATUS_CHECK_DESC,
     "builtin-libsynostorage-syno_disk_db_update": "downloads the archive with Synology disk compatibility database and extracts it",
     "builtin-libsynostorage-syno_btrfs_metadata_check": "checks BTRFS metadata usage and sends email notifications regarding it",
     "pkg-ReplicationService-synobtrfsreplicacore-clean": "cleanups 'received' BTRFS backup snapshots",
@@ -642,10 +654,15 @@ def get_task_list_for_install():
     jobs = synocrond_config["jobs"]
 
     for task_name in jobs.keys():
-        descr = get_synocrond_task_description(task_name)
+        # DSM 7.2 task naming change
+        clean_task_name = task_name
+        if task_name.find("synocrond-job-") == 0:
+            clean_task_name = task_name.replace("synocrond-job-", "")
+
+        descr = get_synocrond_task_description(clean_task_name)
         cur_period = get_task_period(jobs[task_name]["config"])
-        recommended_opt = get_task_recommended_action(task_name)
-        result[task_name] = (cur_period, descr, recommended_opt)
+        recommended_opt = get_task_recommended_action(clean_task_name)
+        result[clean_task_name] = (cur_period, descr, recommended_opt)
 
     return result
 
@@ -807,14 +824,19 @@ def apply_user_config_to_synocrond_config():
 
     is_changed = False
     for task_name in jobs.copy().keys():
+        # DSM 7.2 task naming change
+        clean_task_name = task_name
+        if task_name.find("synocrond-job-") == 0:
+            clean_task_name = task_name.replace("synocrond-job-", "")
+
         cur_period = get_task_period(jobs[task_name]["config"])
-        chosen_opt = get_task_action_from_config(task_name)
+        chosen_opt = get_task_action_from_config(clean_task_name)
 
         if chosen_opt == "skip":
             continue
         elif chosen_opt == "delete":
             is_changed = True
-            handle_dyn_task_deletion(task_name)
+            handle_dyn_task_deletion(clean_task_name)
             del synocrond_config["jobs"][task_name]
         else:
             assert(chosen_opt in ("hourly", "daily", "weekly", "monthly"))
