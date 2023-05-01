@@ -26,11 +26,28 @@ VOLUME_CONF_PATH = "/usr/syno/etc/volume.conf"
 SYNOINFO_CONF_PATH = "/etc/synoinfo.conf"
 SYNOCACHED_CONF_DIRPATH = "/usr/syno/etc/synocached"
 
-scemd_srch_pattern1 = b'\x48\x89\xDE\xBF\x01\x00\x00\x00\x48\x89\x04\\x24\xE8(....)\x48\x89\xDE\xBF\x02\x00\x00\x00\x89\xC5\xE8(....)\x48\x89\xDE\xBF\x07\x00\x00\x00\xE8(....)\x85\xED' 
-scemd_repl_pattern1 =  b'\x48\x89\xDE\xBF\x01\x00\x00\x00\x48\x89\x04\x24\xE8\g<01>\x48\x89\xDE\xBF\x02\x00\x00\x00\x89\xC5\xE8\g<02>\x48\x89\xDE\xBF\x0B\x00\x00\x00\xE8\g<03>\x85\xED'    # one-byte change
 
-synostoraged_srch_pattern = b'\x4C\x89\xEE\xBF\x03\x00\x00\x00\xE8(....)\x85\xC0\x0F\x88(....)\x4C\x89\xEE\xBF\x07\x00\x00\x00\xE8(....)\x85\xC0\x0F\x88(....)\x4C\x89\xEE\xBF\x0B\x00\x00\x00\xE8'
-synostoraged_repl_pattern = b'\x4C\x89\xEE\xBF\x03\x00\x00\x00\xE8\g<01>\x85\xC0\x0F\x88\g<02>\xEB\x13\xEE\xBF\x07\x00\x00\x00\xE8\g<03>\x85\xC0\x0F\x88\g<04>\x4C\x89\xEE\xBF\x0B\x00\x00\x00\xE8'   # two-bytes change
+# patches is a list of tuples (orig_pattern, new_pattern, description)
+BinaryPatchSet = namedtuple("BinaryPatchSet",
+                            ["process_name", "binary_path", "patches"])
+
+scemd_patchset = BinaryPatchSet("scemd", SCEMD_PATH, [
+    (b'\x48\x89\xDE\xBF\x01\x00\x00\x00\x48\x89\x04\\x24\xE8(....)\x48\x89\xDE\xBF\x02\x00\x00\x00\x89\xC5\xE8(....)\x48\x89\xDE\xBF\x07\x00\x00\x00\xE8(....)\x85\xED',
+     b'\x48\x89\xDE\xBF\x01\x00\x00\x00\x48\x89\x04\x24\xE8\g<01>\x48\x89\xDE\xBF\x02\x00\x00\x00\x89\xC5\xE8\g<02>\x48\x89\xDE\xBF\x0B\x00\x00\x00\xE8\g<03>\x85\xED',
+     "NVMe I/O HDD hibernation fix for DSM 7.0-7.1"),
+    (b'\x48\x89\xEE\xBF\x01\x00\x00\x00\x48\x89\x04\\x24\xE8(....)\x48\x89\xEE\xBF\x02\x00\x00\x00\x89\xC3\xE8(....)\x48\x89\xEE\xBF\x07\x00\x00\x00\xE8(....)\x85\xDB',
+     b'\x48\x89\xEE\xBF\x01\x00\x00\x00\x48\x89\x04\x24\xE8\g<01>\x48\x89\xEE\xBF\x02\x00\x00\x00\x89\xC5\xE8\g<02>\x48\x89\xEE\xBF\x0B\x00\x00\x00\xE8\g<03>\x85\xDB',
+     "NVMe I/O HDD hibernation fix for DSM 7.2"),
+    ])
+
+synostoraged_patchset = BinaryPatchSet("synostgd-disk", SYNOSTORAGED_PATH, [
+    (b'\x4C\x89\xEE\xBF\x03\x00\x00\x00\xE8(....)\x85\xC0\x0F\x88(....)\x4C\x89\xEE\xBF\x07\x00\x00\x00\xE8(....)\x85\xC0\x0F\x88(....)\x4C\x89\xEE\xBF\x0B\x00\x00\x00\xE8',
+     b'\x4C\x89\xEE\xBF\x03\x00\x00\x00\xE8\g<01>\x85\xC0\x0F\x88\g<02>\xEB\x13\xEE\xBF\x07\x00\x00\x00\xE8\g<03>\x85\xC0\x0F\x88\g<04>\x4C\x89\xEE\xBF\x0B\x00\x00\x00\xE8',
+     "NVMe I/O HDD hibernation fix for DSM 7.0-7.1"),
+    (b'\x48\x89\xDE\xBF\x03\x00\x00\x00\xE8(....)\x85\xC0\x0F\x88(....)\x48\x89\xDE\xBF\x07\x00\x00\x00\xE8(....)\x85\xC0\x0F\x88(....)\x48\x89\xDE\xBF\x0B\x00\x00\x00\xE8',
+     b'\x48\x89\xDE\xBF\x03\x00\x00\x00\xE8\g<01>\x85\xC0\x0F\x88\g<02>\xEB\x13\xDE\xBF\x07\x00\x00\x00\xE8\g<03>\x85\xC0\x0F\x88\g<04>\x48\x89\xDE\xBF\x0B\x00\x00\x00\xE8',
+     "NVMe I/O HDD hibernation fix for DSM 7.2"),
+    ])
 
 
 g_user_config = {
@@ -42,6 +59,7 @@ g_user_config = {
     "builtin-libhwcontrol-disk_monthly_routine": "monthly",
     "builtin-libhwcontrol-disk_weekly_routine": "weekly",
     "builtin-libhwcontrol-syno_disk_health_record": "weekly",
+    "builtin-libsynostorage-syno_disk_health_record": "weekly",
     "builtin-synobtrfssnap-synobtrfssnap": "monthly",
     "builtin-synobtrfssnap-synostgreclaim": "monthly",
     "builtin-synocrond_btrfs_free_space_analyze-default": "monthly",
@@ -133,7 +151,7 @@ def get_module_base_addr(pid, module_name):
 
 # Returns a list of tuples (offset, orig_bytes, new_bytes)
 # or None on error
-def get_binary_patch_changelist(fpath, search_ptrn, replace_ptrn):
+def get_binary_patch_changelist(fpath, search_ptrn, replace_ptrn, max_matches=0):
     changes = []    
 
     try:
@@ -145,10 +163,9 @@ def get_binary_patch_changelist(fpath, search_ptrn, replace_ptrn):
 
     nmatches = len(re.findall(search_ptrn, data, flags=re.DOTALL))
     if not nmatches:
-        err("cannot find the original pattern")
         return None
-    elif nmatches > 1:
-        err("multiple matches encountered")
+    elif max_matches and nmatches > max_matches:
+        err("too many matches encountered")
         return None
 
     new_data = re.sub(search_ptrn, replace_ptrn, data, flags=re.DOTALL)
@@ -322,47 +339,46 @@ def apply_in_memory_patches(pid, base_addr, changelist):
     return write_mem_sg_list(pid, write_list)
 
 
+def apply_binary_patchset(patchset):
+    proc_name = patchset.process_name
+    mod_fname = os.path.basename(patchset.binary_path)
+
+    pid = get_pid_by_proc_name(proc_name)
+    if not pid:
+        err(f"cannot find pid of {proc_name} process")
+        return False
+
+    image_base = get_module_base_addr(pid, mod_fname)
+    if not image_base:
+        err(f"cannot find {mod_fname} image base")
+        return False
+
+    matched_any = False
+    all_success = True
+    for orig_pattern, new_pattern, patch_descr in patchset.patches:
+        changelist = get_binary_patch_changelist(patchset.binary_path,
+                                                 orig_pattern,
+                                                 new_pattern,
+                                                 max_matches=1)
+        if changelist:
+            matched_any = True
+
+            rc = apply_in_memory_patches(pid, image_base, changelist)
+            if not rc:
+                all_success = False
+                err(f"failed to apply patch '{patch_descr}' for {proc_name}")
+            else:
+                log.debug(f"successfully applied patch '{patch_descr}' for {proc_name}")
+
+    return matched_any and all_success
+
+
 def do_in_memory_fixes():
     init_ptrace()
 
-    # 1
-    scemd_pid = get_pid_by_proc_name("scemd")
-    if not scemd_pid:
-        err(f"cannot find pid of scemd process")
-    else:
-        scemd_base = get_module_base_addr(scemd_pid, "scemd")
-        if not scemd_base:
-            err("cannot find scemd image base")
-            return
-
-        changelist = get_binary_patch_changelist(SCEMD_PATH,
-                                                 scemd_srch_pattern1,
-                                                 scemd_repl_pattern1)
-        if changelist:
-            rc = apply_in_memory_patches(scemd_pid, scemd_base, changelist)
-        else:
-            rc = False
-        if not rc:
-            err("one or more patches were not applied for scemd")
-
-    # 2
-    synostoraged_pid  = get_pid_by_proc_name("synostgd-disk")
-    if not synostoraged_pid:
-        print(f"ERROR: cannot find pid of synostoraged process")
-    else:
-        synostoraged_base = get_module_base_addr(synostoraged_pid, "synostoraged")
-        assert(synostoraged_base)
-
-        changelist = get_binary_patch_changelist(SYNOSTORAGED_PATH,
-                                                 synostoraged_srch_pattern,
-                                                 synostoraged_repl_pattern)
-        if changelist:
-            rc = apply_in_memory_patches(synostoraged_pid, synostoraged_base, changelist)
-        else:
-            rc = False
-        if not rc:
-            err("one or more patches were not applied for synostoraged")
-
+    # allow HDD hibernation when there is an ongoing NVMe activity
+    apply_binary_patchset(scemd_patchset)
+    apply_binary_patchset(synostoraged_patchset)
 
 
 def find_files_by_mask(pattern, path):
@@ -465,6 +481,20 @@ def syno_set_key_value(conf_file, key, value):
 
 
 def remount_root_norelatime():
+    need_remount = True
+    try:
+        ret = subprocess.check_output(["mount"], universal_newlines=True)
+        lines = ret.split('\n')
+        for line in lines:
+            if "md0 on / " in line and "noatime" in line:
+                need_remount = False
+                break
+    except:
+        pass
+
+    if not need_remount:
+        return
+
     try:
         ret = subprocess.call(["mount", "-o", "noatime,remount", "/"],
                               stdout=subprocess.DEVNULL,
@@ -531,19 +561,24 @@ def remove_esynoscheduler_task(task_name):
     return True if "delete task ok" in ret else False
 
 
+UDC_DESC = "user data collection related"
+SYNODBUD_DESC = "updates misc DBs: syno-abuser-blocklist, geoip-database, ca-certificates, securityscan-database"
+SYNO_DISK_HEALTH_RECORD_DESC = "parses /var/log/disk_overview.xml which has disk-related stats like remaining life, errors and other information"
+
 known_task_descriptions = {
-    "builtin-synodbud-synodbud": "updates misc DBs: syno-abuser-blocklist, geoip-database, ca-certificates, securityscan-database",  # /usr/syno/etc/synocron.d/synodbud.conf
-    "builtin-dyn-synodbud-default": "updates misc DBs: syno-abuser-blocklist, geoip-database, ca-certificates, securityscan-database",
+    "builtin-synodbud-synodbud": SYNODBUD_DESC,  # /usr/syno/etc/synocron.d/synodbud.conf
+    "builtin-dyn-synodbud-default": SYNODBUD_DESC,
     "builtin-dyn-autopkgupgrade-default": "update checker for installed packages",
     "builtin-libhwcontrol-disk_daily_routine": "disk SMART info collector, updates info in /var/log/diskprediction/",
     "builtin-libhwcontrol-disk_monthly_routine": "runs syno_disk_performance_monitor which works with HDD performance stats data in /var/log/disk-latency/",
     "builtin-libhwcontrol-disk_weekly_routine": "checks SMART/hotspare status for disks, updates information in /var/log/smart_result/, adds data to /var/log/disk-latency/.SYNODISKLATENCYDB",
-    "builtin-libhwcontrol-syno_disk_health_record": "parses /var/log/disk_overview.xml which has disk-related stats like remaining life, errors and other information",
+    "builtin-libhwcontrol-syno_disk_health_record": SYNO_DISK_HEALTH_RECORD_DESC,
+    "builtin-libsynostorage-syno_disk_health_record": SYNO_DISK_HEALTH_RECORD_DESC,
     "builtin-synobtrfssnap-synobtrfssnap": "cleans up all deleted subovlumes in the system",
     "builtin-synobtrfssnap-synostgreclaim": "checks the number of deleted BTRFS volumes which need reclaiming",
     "builtin-synocrond_btrfs_free_space_analyze-default": "calculates BTRFS fragmentation level for disks and writes results to a per-volume file 'frag_analysis'",
-    "builtin-synodatacollect-udc": "user data collection related",
-    "builtin-synodatacollect-udc-disk": "user data collection related",
+    "builtin-synodatacollect-udc": UDC_DESC,
+    "builtin-synodatacollect-udc-disk": UDC_DESC,
     "builtin-synorenewdefaultcert-renew_default_certificate": "processes cryptographic certificates - generates some, checks expiration, deletes, copies",
     "builtin-synosharesnaptree_reconstruct-default": "runs /usr/syno/sbin/synosharesnaptree -x <volume>, which reconstructs BTRFS snapshot tree",
     "builtin-synosharing-default": "does cleanup of SQLite DB tables (session/token/entry) in /usr/syno/etc/private/session/sharing/sharing.db",
@@ -949,7 +984,7 @@ def apply_misc_fixes():
 
 
 def run():
-    log.debug("--- task run() triggered ---")
+    log.debug("run() triggered for the scheduled task")
     remount_root_norelatime()
     do_in_memory_fixes()
     apply_user_config_to_task_files()
