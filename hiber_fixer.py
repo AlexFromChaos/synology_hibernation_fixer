@@ -78,6 +78,8 @@ g_user_config = {
     "builtin-libsynostorage-syno_disk_db_update": "monthly",
     "builtin-libsynostorage-syno_btrfs_metadata_check": "monthly",
     "pkg-ReplicationService-synobtrfsreplicacore-clean": "monthly",
+    "builtin-Docker-docker_check_image_upgradable_job": "weekly",
+    "pkg-Docker-docker_check_image_upgradable_job": "weekly",
     #END_CONFIG_SECTION
     }
 
@@ -572,6 +574,7 @@ EW_WEEKLY_CHECK_DESC = "queries synology website for 'extended warranty' info, u
 SYNOLEGALNOTIFIER_DESC = "'legal data downloader'. Downloads user agreements from Synology site, can notify user about them"
 NTP_STATUS_CHECK_DESC = "runs NTP time sync"
 RENEW_DEFAULT_CERTIFICATE_DESC = "processes cryptographic certificates - generates some, checks expiration, deletes, copies"
+DOCKER_CHECK_IMAGE_UPGRADABLE_DESC = "Docker upgradable image checker tool"
 
 known_task_descriptions = {
     "builtin-synodbud-synodbud": SYNODBUD_DESC,  # /usr/syno/etc/synocron.d/synodbud.conf
@@ -600,6 +603,8 @@ known_task_descriptions = {
     "builtin-libsynostorage-syno_disk_db_update": "downloads the archive with Synology disk compatibility database and extracts it",
     "builtin-libsynostorage-syno_btrfs_metadata_check": "checks BTRFS metadata usage and sends email notifications regarding it",
     "pkg-ReplicationService-synobtrfsreplicacore-clean": "cleanups 'received' BTRFS backup snapshots",
+    "builtin-Docker-docker_check_image_upgradable_job": DOCKER_CHECK_IMAGE_UPGRADABLE_DESC,
+    "pkg-Docker-docker_check_image_upgradable_job": DOCKER_CHECK_IMAGE_UPGRADABLE_DESC,
 }
 
 def get_synocrond_task_description(taskname):
