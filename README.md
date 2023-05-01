@@ -15,7 +15,7 @@ The script integrates changes I've described [here](https://www.reddit.com/r/syn
 - setting `noatime` for disk volumes
 - **persists after DSM upgrades**. No need to reapply the script after DSM updates (as long as Synology doesn't break something)
 
-The script should support all x86-based NAS models running DSM 7.
+The script should support all x86-based NAS models running DSM 7. Supported versions are 7.0, 7.1 and 7.2RC.
 
 Some of the fixes might be usable on DSM 6 as well, but I don't have a NAS with DSM 6 to test.
 
