@@ -899,13 +899,16 @@ def process_volume_conf():
         volume_conf.read(VOLUME_CONF_PATH)
 
         for uuid in volume_conf.sections():
-            volumes_atime_opt[uuid] = volume_conf[uuid]["atime_opt"]
+            if "atime_opt" in volume_conf[uuid]:
+                volumes_atime_opt[uuid] = volume_conf[uuid]["atime_opt"]
+            else:
+                volumes_atime_opt[uuid] = ""
     except:
         err(f"failed to parse {VOLUME_CONF_PATH}")
         return
 
 
-    bad_atime_opt_volumes = [uuid for uuid in volumes.keys()
+    bad_atime_opt_volumes = [uuid for uuid in volumes_atime_opt.keys()
                                   if volumes_atime_opt[uuid] != "noatime"]
 
     if not bad_atime_opt_volumes:
