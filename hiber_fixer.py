@@ -80,6 +80,23 @@ g_user_config = {
     "pkg-ReplicationService-synobtrfsreplicacore-clean": "monthly",
     "builtin-Docker-docker_check_image_upgradable_job": "weekly",
     "pkg-Docker-docker_check_image_upgradable_job": "weekly",
+    "pkg-Docker-default": "weekly",
+    "builtin-ContainerManager-docker_check_image_upgradable_job": "weekly",
+    "builtin-configautobackup-configautobackup": "unchanged",
+    "builtin-dyn-configautobackup-default": "unchanged",
+    "builtin-myds-job": "weekly",
+    "builtin-dyn-myds-job": "weekly",
+    "builtin-autopkgupgrade-autopkgupgrade": "weekly",
+    "builtin-Spreadsheet-auto_clean_weekly": "monthly",
+    "builtin-Spreadsheet-auto_office_clean_temp_daily": "weekly",
+    "builtin-SynologyDrive-caculate-db-usage": "weekly",
+    "builtin-SynologyDrive-cleanup-db": "weekly",
+    "builtin-SynologyPhotos-SynologyPhotosDatabaseToolVacuum": "weekly",
+    "builtin-CodecPack-CodecPackCheckAndUpdate": "monthly",
+    "builtin-SynologyApplicationService-auto_vacuum_daily": "weekly",
+    "builtin-DownloadStation-DownloadStationUpdateJob": "monthly",
+    "builtin-DownloadStation-DownloadStationMonitorTransmissionJob": "weekly",
+    "pkg-SynologyApplicationService-auto_vacuum_daily": "weekly",
     #END_CONFIG_SECTION
     }
 
