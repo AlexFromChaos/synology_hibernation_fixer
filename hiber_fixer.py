@@ -853,8 +853,15 @@ def apply_user_config_to_synocrond_config():
     if is_changed:
         log.debug(f"going to change /usr/syno/etc/synocrond.config")
 
+        # 'systemctl reload synocrond' can fail
+        ret = subprocess.call(["systemctl", "stop", "synocrond"])
+        if ret:
+            err(f"stopping synocrond failed: {ret}")
+            return False
+
         if not save_synocrond_config(synocrond_config):
             err("saving synocrond.config changes failed")
+            subprocess.call(["systemctl", "start", "synocrond"])
             return False
 
         try:
@@ -864,9 +871,9 @@ def apply_user_config_to_synocrond_config():
         except:
             pass
 
-        ret = subprocess.call(["systemctl", "reload", "synocrond"])
+        ret = subprocess.call(["systemctl", "start", "synocrond"])
         if ret:
-            err(f"reloading synocrond failed: {ret}")
+            err(f"starting synocrond failed: {ret}")
             return False
 
     return True
