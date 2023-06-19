@@ -987,6 +987,8 @@ def create_sched_task_content(script_body):
 
     cmd_lines = f'echo "{compressed_base64}" | base64 -d | xz -d --stdout > /tmp/hiber_fixer.py'
     cmd_lines += '\n'
+    cmd_lines += "sleep 7"
+    cmd_lines += '\n'
     cmd_lines += "python3 /tmp/hiber_fixer.py --run"
     #cmd_lines += '\n'
     #cmd_lines += "rm /tmp/hiber_fixer.py"
