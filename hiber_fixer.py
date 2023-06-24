@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os, fnmatch, shutil, platform
+import sys, os, fnmatch, shutil, platform, time
 import re
 import struct
 import subprocess
@@ -987,8 +987,6 @@ def create_sched_task_content(script_body):
 
     cmd_lines = f'echo "{compressed_base64}" | base64 -d | xz -d --stdout > /tmp/hiber_fixer.py'
     cmd_lines += '\n'
-    cmd_lines += "sleep 7"
-    cmd_lines += '\n'
     cmd_lines += "python3 /tmp/hiber_fixer.py --run"
     #cmd_lines += '\n'
     #cmd_lines += "rm /tmp/hiber_fixer.py"
@@ -1038,9 +1036,50 @@ def apply_misc_fixes():
         return
 
 
+def get_boot_state():
+    try:
+        ret = subprocess.run(["systemctl", "is-system-running"],
+                             capture_output=True,
+                             universal_newlines=True)
+        return ret.stdout.strip()
+    except:
+        return "unknown"
+
+BOOT_TIMEOUT = 180  # 3 min
+
+# returns False if timed out waiting
+def ensure_boot_complete():
+    state = get_boot_state()
+    if state in ("running", "degraded"):
+        return True
+
+    # systemd is still booting
+    pid = os.fork()
+    if pid == 0:
+        # in the child
+        start_time = time.time()
+
+        while True:
+            time.sleep(0.5)
+            state = get_boot_state()
+            cur_time = time.time()
+
+            if state in ("running", "degraded"):
+                log.debug("waited for boot to finish for {:.2f} sec".format(cur_time - start_time))
+                return True
+
+            if cur_time > start_time + BOOT_TIMEOUT:
+                return False
+    else:
+        # in the parent
+        sys.exit(0)
+
 
 def run():
     log.debug("run() triggered for the scheduled task")
+    if not ensure_boot_complete():
+        log.error("timed out while waiting for boot to complete!")
+        return -1
     remount_root_norelatime()
     do_in_memory_fixes()
     apply_user_config_to_task_files()
